@@ -2,7 +2,7 @@ AMPHPv5 for Symfony HttpClient
 ====================
 
 This is a partial fork of [@nicolas-grekas 's pull request](https://github.com/symfony/symfony/pull/54179) for SymfonyHttpClient
-that adds support for using AMPHPv5 with PHP >= 8.2 instead of waiting for PHP 8.4.
+that adds support for using AMPHPv3 (AMPHP HTTPClient v5) with PHP >= 8.2 instead of waiting for PHP 8.4.
 
 **This is not a full fork that replaces the original Symfony HttpClient, but a separate package that can be used alongside it.**
 
