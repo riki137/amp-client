@@ -6,7 +6,7 @@ that adds support for using AMPHPv3 (AMPHP HTTPClient v5) with PHP >= 8.2 instea
 
 **This is not a full fork that replaces the original Symfony HttpClient, but a separate package that can be used alongside it.**
 
-The code for HTTP client and it's other adapters is removed, only it's AMPHPv5-related and necessary `@internal` code is kept.
+The code for HTTP client and it's other adapters is removed, only it's AMPHPv3-related and necessary `@internal` code is kept.
 
 It solves the problem of the destructor suspension by deferring the destruction.
 
