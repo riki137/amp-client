@@ -1,7 +1,7 @@
 {
     "name": "riki137/amp-client",
     "type": "library",
-    "description": "PHP8.2 AMPHPv5 adapter for Symfony HttpClient",
+    "description": "PHP8.2+ AMPHPv3 adapter for Symfony HttpClient",
     "keywords": ["http"],
     "homepage": "https://symfony.com",
     "license": "MIT",
