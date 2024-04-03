@@ -9,40 +9,33 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\HttpClient;
+namespace Riki137\AmpClient;
 
 use Amp\CancelledException;
+use Amp\DeferredFuture;
 use Amp\Http\Client\DelegateHttpClient;
 use Amp\Http\Client\InterceptedHttpClient;
 use Amp\Http\Client\PooledHttpClient;
 use Amp\Http\Client\Request;
+use Amp\Http\HttpMessage;
 use Amp\Http\Tunnel\Http1TunnelConnector;
-use Amp\Promise;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
+use Riki137\AmpClient\Internal\AmpClientStateV5;
+use Riki137\AmpClient\Response\AmpResponseV5;
+use Riki137\AmpClient\Response\ResponseStream;
 use Symfony\Component\HttpClient\Exception\TransportException;
-use Symfony\Component\HttpClient\Internal\AmpClientState;
-use Symfony\Component\HttpClient\Response\AmpResponse;
-use Symfony\Component\HttpClient\Response\ResponseStream;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 use Symfony\Contracts\HttpClient\ResponseStreamInterface;
 use Symfony\Contracts\Service\ResetInterface;
-
-if (!interface_exists(DelegateHttpClient::class)) {
-    throw new \LogicException('You cannot use "Symfony\Component\HttpClient\AmpHttpClient" as the "amphp/http-client" package is not installed. Try running "composer require amphp/http-client:^4.2.1".');
-}
-
-if (!interface_exists(Promise::class)) {
-    throw new \LogicException('You cannot use "Symfony\Component\HttpClient\AmpHttpClient" as the installed "amphp/http-client" is not compatible with this version of "symfony/http-client". Try downgrading "amphp/http-client" to "^4.2.1".');
-}
 
 /**
  * A portable implementation of the HttpClientInterface contracts based on Amp's HTTP client.
  *
  * @author Nicolas Grekas <p@tchwork.com>
  */
-final class AmpHttpClient implements HttpClientInterface, LoggerAwareInterface, ResetInterface
+final class AmpHttpClientV5 implements HttpClientInterface, LoggerAwareInterface, ResetInterface
 {
     use HttpClientTrait;
     use LoggerAwareTrait;
@@ -53,26 +46,30 @@ final class AmpHttpClient implements HttpClientInterface, LoggerAwareInterface, 
 
     private array $defaultOptions = self::OPTIONS_DEFAULTS;
     private static array $emptyDefaults = self::OPTIONS_DEFAULTS;
-    private AmpClientState $multi;
+    private AmpClientStateV5 $multi;
 
     /**
-     * @param array         $defaultOptions     Default requests' options
+     * @param array $defaultOptions Default requests' options
      * @param callable|null $clientConfigurator A callable that builds a {@see DelegateHttpClient} from a {@see PooledHttpClient};
      *                                          passing null builds an {@see InterceptedHttpClient} with 2 retries on failures
-     * @param int           $maxHostConnections The maximum number of connections to a single host
-     * @param int           $maxPendingPushes   The maximum number of pushed responses to accept in the queue
+     * @param int $maxHostConnections The maximum number of connections to a single host
+     * @param int $maxPendingPushes The maximum number of pushed responses to accept in the queue
      *
      * @see HttpClientInterface::OPTIONS_DEFAULTS for available options
      */
-    public function __construct(array $defaultOptions = [], ?callable $clientConfigurator = null, int $maxHostConnections = 6, int $maxPendingPushes = 50)
-    {
+    public function __construct(
+        array $defaultOptions = [],
+        ?callable $clientConfigurator = null,
+        int $maxHostConnections = 6,
+        int $maxPendingPushes = 50
+    ) {
         $this->defaultOptions['buffer'] ??= self::shouldBuffer(...);
 
         if ($defaultOptions) {
             [, $this->defaultOptions] = self::prepareRequest(null, null, $defaultOptions, $this->defaultOptions);
         }
 
-        $this->multi = new AmpClientState($clientConfigurator, $maxHostConnections, $maxPendingPushes, $this->logger);
+        $this->multi = new AmpClientStateV5($clientConfigurator, $maxHostConnections, $maxPendingPushes, $this->logger);
     }
 
     /**
@@ -90,7 +87,7 @@ final class AmpHttpClient implements HttpClientInterface, LoggerAwareInterface, 
 
         if ($options['bindto']) {
             if (str_starts_with($options['bindto'], 'if!')) {
-                throw new TransportException(__CLASS__.' cannot bind to network interfaces, use e.g. CurlHttpClient instead.');
+                throw new TransportException(__CLASS__ . ' cannot bind to network interfaces, use e.g. CurlHttpClient instead.');
             }
             if (str_starts_with($options['bindto'], 'host!')) {
                 $options['bindto'] = substr($options['bindto'], 5);
@@ -114,13 +111,13 @@ final class AmpHttpClient implements HttpClientInterface, LoggerAwareInterface, 
         }
 
         if ($options['peer_fingerprint'] && !isset($options['peer_fingerprint']['pin-sha256'])) {
-            throw new TransportException(__CLASS__.' supports only "pin-sha256" fingerprints.');
+            throw new TransportException(__CLASS__ . ' supports only "pin-sha256" fingerprints.');
         }
 
         $request = new Request(implode('', $url), $method);
 
         if ($options['http_version']) {
-            $request->setProtocolVersions(match ((float) $options['http_version']) {
+            $request->setProtocolVersions(match ((float)$options['http_version']) {
                 1.0 => ['1.0'],
                 1.1 => ['1.1', '1.0'],
                 default => ['2', '1.1', '1.0'],
@@ -132,9 +129,10 @@ final class AmpHttpClient implements HttpClientInterface, LoggerAwareInterface, 
             $request->addHeader($h[0], $h[1]);
         }
 
-        $request->setTcpConnectTimeout(1000 * $options['timeout']);
-        $request->setTlsHandshakeTimeout(1000 * $options['timeout']);
-        $request->setTransferTimeout(1000 * $options['max_duration']);
+        $coef = $request instanceof HttpMessage ? 1 : 1000;
+        $request->setTcpConnectTimeout($coef * $options['timeout']);
+        $request->setTlsHandshakeTimeout($coef * $options['timeout']);
+        $request->setTransferTimeout($coef * $options['max_duration']);
         if (method_exists($request, 'setInactivityTimeout')) {
             $request->setInactivityTimeout(0);
         }
@@ -142,28 +140,32 @@ final class AmpHttpClient implements HttpClientInterface, LoggerAwareInterface, 
         if ('' !== $request->getUri()->getUserInfo() && !$request->hasHeader('authorization')) {
             $auth = explode(':', $request->getUri()->getUserInfo(), 2);
             $auth = array_map('rawurldecode', $auth) + [1 => ''];
-            $request->setHeader('Authorization', 'Basic '.base64_encode(implode(':', $auth)));
+            $request->setHeader('Authorization', 'Basic ' . base64_encode(implode(':', $auth)));
         }
 
-        return new AmpResponse($this->multi, $request, $options, $this->logger);
+        return new AmpResponseV5($this->multi, $request, $options, $this->logger);
     }
 
     public function stream(ResponseInterface|iterable $responses, ?float $timeout = null): ResponseStreamInterface
     {
-        if ($responses instanceof AmpResponse) {
+        if ($responses instanceof AmpResponseV5) {
             $responses = [$responses];
         }
 
-        return new ResponseStream(AmpResponse::stream($responses, $timeout));
+        return new ResponseStream(AmpResponseV5::stream($responses, $timeout));
     }
 
     public function reset(): void
     {
         $this->multi->dnsCache = [];
 
-        foreach ($this->multi->pushedResponses as $authority => $pushedResponses) {
+        foreach ($this->multi->pushedResponses as $pushedResponses) {
             foreach ($pushedResponses as [$pushedUrl, $pushDeferred]) {
-                $pushDeferred->fail(new CancelledException());
+                if ($pushDeferred instanceof DeferredFuture) {
+                    $pushDeferred->error(new CancelledException());
+                } else {
+                    $pushDeferred->fail(new CancelledException());
+                }
 
                 $this->logger?->debug(sprintf('Unused pushed response: "%s"', $pushedUrl));
             }

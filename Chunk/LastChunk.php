@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\HttpClient\Chunk;
+namespace Riki137\AmpClient\Chunk;
 
 /**
  * @author Nicolas Grekas <p@tchwork.com>

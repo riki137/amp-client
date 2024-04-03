@@ -1,29 +1,18 @@
 HttpClient component
 ====================
 
-The HttpClient component provides powerful methods to fetch HTTP resources synchronously or asynchronously.
+This is a fork of [@nicolas-grekas 's pull request](https://github.com/symfony/symfony/pull/54179) for SymfonyHttpClient
+that adds support for using AMPHPv5 with PHP >= 8.2 instead of waiting for PHP 8.4.
 
-Sponsor
--------
+It solves the problem of the destructor suspension by deferring the destruction.
 
-The HttpClient component for Symfony 7.0 is [backed][1] by [Innovative Web AG][2].
+---
 
-Innovative Web AG (i-web) is a specialist for web, applications and the
-digitalisation of the public sector based in Switzerland. With their i-CMS,
-public authorities and institutions implement modern websites and eGovernment
-portals and offer user-friendly eServices for residents and companies.
+If you use this client, you should include this piece of code that executes when your application is closing 
+(onShutdown, terminate event, etc.):
 
-Help Symfony by [sponsoring][3] its development!
+```php
+\Revolt\EventLoop::run();
+```
 
-Resources
----------
-
- * [Documentation](https://symfony.com/doc/current/components/http_client.html)
- * [Contributing](https://symfony.com/doc/current/contributing/index.html)
- * [Report issues](https://github.com/symfony/symfony/issues) and
-   [send Pull Requests](https://github.com/symfony/symfony/pulls)
-   in the [main Symfony repository](https://github.com/symfony/symfony)
-
-[1]: https://symfony.com/backers
-[2]: https://www.i-web.ch
-[3]: https://symfony.com/sponsor
+This ensures that all pending requests are completed before the application is closed and allows you to avoid PHP <8.4's destructor suspension.

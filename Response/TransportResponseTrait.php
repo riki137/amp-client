@@ -9,16 +9,16 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\HttpClient\Response;
+namespace Riki137\AmpClient\Response;
 
 use Psr\Log\LoggerInterface;
-use Symfony\Component\HttpClient\Chunk\DataChunk;
-use Symfony\Component\HttpClient\Chunk\ErrorChunk;
-use Symfony\Component\HttpClient\Chunk\FirstChunk;
-use Symfony\Component\HttpClient\Chunk\LastChunk;
+use Riki137\AmpClient\Chunk\DataChunk;
+use Riki137\AmpClient\Chunk\ErrorChunk;
+use Riki137\AmpClient\Chunk\FirstChunk;
+use Riki137\AmpClient\Chunk\LastChunk;
+use Riki137\AmpClient\Internal\Canary;
+use Riki137\AmpClient\Internal\ClientState;
 use Symfony\Component\HttpClient\Exception\TransportException;
-use Symfony\Component\HttpClient\Internal\Canary;
-use Symfony\Component\HttpClient\Internal\ClientState;
 
 /**
  * Implements common logic for transport-level response classes.

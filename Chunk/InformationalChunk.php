@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\HttpClient\Chunk;
+namespace Riki137\AmpClient\Chunk;
 
 /**
  * @author Nicolas Grekas <p@tchwork.com>
@@ -22,6 +22,7 @@ class InformationalChunk extends DataChunk
 
     public function __construct(int $statusCode, array $headers)
     {
+        parent::__construct();
         $this->status = [$statusCode, $headers];
     }
 

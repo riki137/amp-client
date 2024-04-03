@@ -9,14 +9,13 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\HttpClient;
+namespace Riki137\AmpClient;
 
+use Riki137\AmpClient\Response\StreamableInterface;
+use Riki137\AmpClient\Response\StreamWrapper;
 use Symfony\Component\HttpClient\Exception\InvalidArgumentException;
 use Symfony\Component\HttpClient\Exception\TransportException;
-use Symfony\Component\HttpClient\Response\StreamableInterface;
-use Symfony\Component\HttpClient\Response\StreamWrapper;
 use Symfony\Component\Mime\MimeTypes;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * Provides the common logic from writing HttpClientInterface implementations.

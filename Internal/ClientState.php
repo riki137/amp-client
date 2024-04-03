@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\HttpClient\Internal;
+namespace Riki137\AmpClient\Internal;
 
 /**
  * Internal representation of the client state.
