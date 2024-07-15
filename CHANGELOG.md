@@ -2,6 +2,10 @@ CHANGELOG
 =========
 
 ## [Unreleased]
+
+
+
+## [7.0.1] - 2024-07-15
 ### Added
 - AsyncResponse
 
