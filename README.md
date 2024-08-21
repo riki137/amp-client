@@ -1,6 +1,8 @@
 AMPHPv5 for Symfony HttpClient
 ====================
 
+> This package is deprecated and should be replaced by [efabrica/revolt-curl-client](https://github.com/efabrica-team/revolt-curl-client).
+
 This is a partial fork of [@nicolas-grekas 's pull request](https://github.com/symfony/symfony/pull/54179) for SymfonyHttpClient
 that adds support for using AMPHPv3 (AMPHP HTTPClient v5) with PHP >= 8.2 instead of waiting for PHP 8.4.
 
