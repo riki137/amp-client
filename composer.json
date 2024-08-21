@@ -30,8 +30,5 @@
     "autoload": {
         "psr-4": { "Riki137\\AmpClient\\": "" }
     },
-    "deprecation": "This package is deprecated and should be replaced by efabrica/revolt-curl-client.",
-    "replace": {
-        "riki137/amp-client": "self.version"
-    }
+    "deprecation": "This package is deprecated and should be replaced by efabrica/revolt-curl-client."
 }
